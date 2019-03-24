@@ -9,6 +9,12 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["js/main.js"]
+    }
+  ],
   "default_locale": "en",
   "background": {
     "page": "src/bg/background.html",
@@ -20,6 +26,7 @@
     "default_popup": "src/browser_action/browser_action.html"
   },
   "permissions": [
-    "tabs"
+    "tabs",
+    "activeTab"
   ]
 }
