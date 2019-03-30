@@ -1,0 +1,18 @@
+body {
+  align-items: stretch;
+  box-sizing: content-box;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  height: 20rem;
+  margin: 0 auto;
+  padding: 1rem;
+  position: relative;
+  width: 15rem;
+  border-radius: 20px;
+}
+
+h1 {
+  font-size: 3em;
+  font-weight: 800;
+}
