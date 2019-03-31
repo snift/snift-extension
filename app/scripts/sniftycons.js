@@ -1,10 +1,10 @@
-const icon_path = "/assets/sniftycons/plain";
+const icon_path = "/assets/sniftycons/gradient";
 
 const sniftycons = {
-  poor: `${icon_path}/sniftycon-red-sad.svg`,
-  ok: `${icon_path}/sniftycon-neutral-orange.svg`,
+  default: "/assets/images/icon.svg",
   good: `${icon_path}/sniftycon-happy-green.svg`,
-  default: "/assets/images/icon.svg"
+  ok: `${icon_path}/sniftycon-neutral-orange.svg`,
+  poor: `${icon_path}/sniftycon-red-sad.svg`
 };
 
 export default sniftycons;
