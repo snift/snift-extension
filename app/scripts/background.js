@@ -1,86 +1,82 @@
-import { storageGet } from "../store";
-import { allTabs } from "./tabs";
-import { isProtocolSupported } from "./utils";
 import { fetchAndCacheScores } from "./api";
 import { ERROR_MESSAGES } from "../constants";
+import sniftycons from "./sniftycons";
+import { storageGet } from "../store";
+import { isProtocolSupported, fetchOrigin, findScoreRange } from "./utils";
 
-const changeIconByScore = score => {
-  if (score < 0.55) {
-    browser.browserAction.setIcon({ path: "/assets/sniftycons/sniftycon-red-sad.svg" });
-  } else if (score > 0.55 && score < 0.75) {
-    browser.browserAction.setIcon({ path: "/assets/sniftycons/sniftycon-neutral-orange.svg" });
-  } else {
-    browser.browserAction.setIcon({ path: "/assets/sniftycons/sniftycon-happy-green.svg" });
-  }
+const setDefaultIcon = () => {
+  browser.browserAction.setIcon({ path: sniftycons.default });
 };
 
-function setDefaultIcon() {
-  browser.browserAction.setIcon({ path: "/assets/images/icon.svg" });
-}
-
-/**
- * checks for origin in localStorage and changes icon based on score value, else fetches from api and stores it.
- * @param {*} url - origin url for which score has to be updated
- */
-const scoreUpdater = url => {
-  return new Promise((resolve, reject) => {
-    const { origin, protocol } = new URL(url);
-    if (isProtocolSupported(protocol)) {
-      storageGet(origin).then(data => {
-        if (!data) reject(new Error(ERROR_MESSAGES.data_unavailable));
-        else {
-          const { scores } = data[origin];
-          changeIconByScore(scores.score);
-        }
-      });
-    } else {
-      reject(new Error(ERROR_MESSAGES.unsupported_protocol));
-    }
+const changeIconByScore = score => {
+  const range = findScoreRange(score);
+  browser.browserAction.setIcon({
+    path: sniftycons[range]
   });
 };
 
-// run background job for all tabs to get information upfront
-allTabs.then(tabs => {
-  for (let tab of tabs) {
-    if (tab.url) {
-      scoreUpdater(tab.url).catch(err => {
-        if (err.message === ERROR_MESSAGES.data_unavailable) {
-          fetchAndCacheScores(tab.url);
-        } else if (err.message === ERROR_MESSAGES.unsupported_protocol) {
-        } else console.error(err);
-      });
+/**
+ * tries to find scores for url from localStorage, also changes icon if score is found
+ * else fetches from the api and caches them.
+ * @param {*} url - origin url for which score has to be updated
+ */
+const findScore = async url => {
+  try {
+    const { origin, protocol } = new URL(url);
+    if (isProtocolSupported(protocol)) {
+      const data = await storageGet(origin);
+      if (!data) throw new Error(ERROR_MESSAGES.data_unavailable);
+      else {
+        const { scores } = data[origin];
+        changeIconByScore(scores.score);
+      }
+    } else {
+      throw new Error(ERROR_MESSAGES.unsupported_protocol);
     }
+  } catch (error) {
+    throw error;
+  }
+};
+
+// handle errors thrown by findScore
+const handleScoreErrors = (err, url) => {
+  const { data_unavailable, unsupported_protocol } = ERROR_MESSAGES;
+  switch (err.message) {
+    case data_unavailable:
+      fetchAndCacheScores(url).then(json => changeIconByScore(json.scores.score));
+      break;
+
+    case unsupported_protocol:
+      setDefaultIcon();
+      break;
+
+    default:
+      console.error(err.message);
+      break;
+  }
+};
+
+// LISTENERS
+// respond to async runtime event messages
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "update_icon") {
+    changeIconByScore(message.value);
   }
 });
 
 // changeIcon whenever the activeTab is changed
-browser.tabs.onActivated.addListener(function(activeInfo) {
+browser.tabs.onActivated.addListener(activeInfo => {
   const activeTab = browser.tabs.get(activeInfo.tabId);
   activeTab.then(tab => {
-    scoreUpdater(tab.url).catch(err => {
-      setDefaultIcon();
-      if (err.message === ERROR_MESSAGES.data_unavailable) {
-        fetchAndCacheScores(tab.url);
-      } else if (err.message === ERROR_MESSAGES.unsupported_protocol) {
-        // show default logo
-      } else console.error(err);
-    });
+    const url = fetchOrigin(tab.url);
+    findScore(url).catch(err => handleScoreErrors(err, url));
   });
 });
 
 // recalculate score for a particular tab when the url in the tab changes or a new tab is added
-function handleUpdated(tabId, changeInfo, tabInfo) {
+browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
   if (changeInfo.url) {
-    // console.log("Tab: " + tabId + " URL changed to " + changeInfo.url);
-    scoreUpdater(changeInfo.url).catch(err => {
-      setDefaultIcon();
-      if (err.message === ERROR_MESSAGES.data_unavailable) {
-        fetchAndCacheScores(changeInfo.url);
-      } else if (err.message === ERROR_MESSAGES.unsupported_protocol) {
-        // TODO: show default logo
-      } else console.error(err);
-    });
+    const url = fetchOrigin(changeInfo.url);
+    findScore(url).catch(err => handleScoreErrors(err, url));
   }
-}
-
-browser.tabs.onUpdated.addListener(handleUpdated);
+});

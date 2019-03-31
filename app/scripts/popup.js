@@ -1,7 +1,11 @@
-import { storageGet } from "../store";
-import { currentTab } from "./tabs";
-import { isProtocolSupported } from "./utils";
 import { fetchAndCacheScores } from "./api";
+import { storageGet } from "../store";
+import { isProtocolSupported } from "./utils";
+
+const currentTab = browser.tabs.query({
+  currentWindow: true,
+  active: true
+});
 
 currentTab.then(tabs => {
   const tab = tabs[0];

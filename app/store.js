@@ -7,5 +7,5 @@ export const storageGet = async key => {
 };
 
 export const storageSet = async (key, value) => {
-  store.set({ [key]: value });
+  return await store.set({ [key]: value });
 };
