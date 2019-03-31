@@ -4,15 +4,20 @@ body {
   background: #fafafa;
   display: flex;
   flex-direction: column;
-  height: 20rem;
+  height: 25rem;
   margin: 0 auto;
-  padding: 1rem;
   position: relative;
   width: 15rem;
   border-radius: 20px;
 }
 
-h1 {
-  font-size: 3em;
-  font-weight: 800;
+.hero img {
+  width: 13rem;
+  height: 2rem;
+  padding: 1rem;
+  background: #040404;
+}
+
+.score-container {
+  padding: 1rem;
 }
