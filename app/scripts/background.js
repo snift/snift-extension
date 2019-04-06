@@ -1,10 +1,10 @@
 import { fetchAndCacheScores } from "./api";
-import { ERROR_MESSAGES } from "../constants";
+import { ERRORS } from "../constants";
 import sniftycons from "./sniftycons";
 import { storageGet } from "../store";
-import { isProtocolSupported, fetchOrigin, findScoreRange } from "./utils";
+import { checkProtocolSupport, fetchOrigin, findScoreRange } from "./utils";
 
-const setDefaultIcon = () => {
+export const setDefaultIcon = () => {
   browser.browserAction.setIcon({ path: sniftycons.default });
 };
 
@@ -23,15 +23,15 @@ const changeIconByScore = score => {
 const findScore = async url => {
   try {
     const { origin, protocol } = new URL(url);
-    if (isProtocolSupported(protocol)) {
+    if (checkProtocolSupport(protocol)) {
       const data = await storageGet(origin);
-      if (!data) throw new Error(ERROR_MESSAGES.data_unavailable);
+      if (!data) throw new Error(ERRORS.data_unavailable);
       else {
         const { scores } = data[origin];
         changeIconByScore(scores.score);
       }
     } else {
-      throw new Error(ERROR_MESSAGES.unsupported_protocol);
+      throw new Error(ERRORS.unsupported_protocol);
     }
   } catch (error) {
     throw error;
@@ -40,7 +40,7 @@ const findScore = async url => {
 
 // handle errors thrown by findScore
 const handleScoreErrors = (err, url) => {
-  const { data_unavailable, unsupported_protocol } = ERROR_MESSAGES;
+  const { data_unavailable, unsupported_protocol } = ERRORS;
   switch (err.message) {
     case data_unavailable:
       fetchAndCacheScores(url).then(json => changeIconByScore(json.scores.score));
@@ -61,6 +61,8 @@ const handleScoreErrors = (err, url) => {
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "update_icon") {
     changeIconByScore(message.value);
+  } else if (message.action === "set_default_icon") {
+    setDefaultIcon();
   }
 });
 

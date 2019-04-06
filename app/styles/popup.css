@@ -1,23 +1,114 @@
 body {
   align-items: stretch;
-  box-sizing: content-box;
   background: #fafafa;
+  border-radius: 20px;
+  box-sizing: content-box;
   display: flex;
   flex-direction: column;
-  height: 25rem;
+  height: 30rem;
   margin: 0 auto;
   position: relative;
-  width: 15rem;
-  border-radius: 20px;
+  width: 20rem;
+  color: #212121;
+}
+
+.hero {
+  height: 64px;
 }
 
 .hero img {
-  width: 13rem;
+  width: 18rem;
   height: 2rem;
   padding: 1rem;
-  background: #040404;
+  background: #1c1c1c;
 }
 
-.score-container {
-  padding: 1rem;
+.main {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #fcfcfc;
+}
+
+#popup-container {
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#score-container {
+  margin-top: -15px;
+}
+
+#siteinfo-container {
+  align-items: center;
+  border-bottom: 1px solid #e9e9e9;
+  background: #ededed;
+  display: flex;
+  justify-content: center;
+  /* padding: 20px 0px; */
+  text-align: center;
+}
+
+#site-favicon {
+  height: 24px;
+  margin-right: 0.75rem;
+  width: 24px;
+}
+
+#site-url {
+  font-weight: 600;
+  font-size: 1.05rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 16rem;
+  word-break: keep-all;
+  white-space: nowrap;
+}
+
+.site-error {
+  display: none;
+  background: #e0e0e0;
+  margin-top: 0px;
+  flex-direction: column;
+  padding: 2rem;
+}
+
+#question-mark {
+  width: 4rem;
+  margin: 0 auto;
+}
+
+#error-message {
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 1.2px;
+  margin-top: 25px;
+  text-transform: uppercase;
+}
+
+#snift-gauge {
+  left: 50%;
+  position: absolute;
+  margin-top: 50px;
+  margin-left: -75px;
+  width: 150px;
+}
+
+#snift-score {
+  font-size: 25px;
+  font-weight: 700;
+  left: 45%;
+  margin-top: 75px;
+  position: absolute;
+}
+
+#score-label {
+  left: 30.5%;
+  margin-top: 122px;
+  position: absolute;
+  font-weight: 700;
+  letter-spacing: 0.25rem;
+  font-size: 13px;
+  text-transform: uppercase;
 }

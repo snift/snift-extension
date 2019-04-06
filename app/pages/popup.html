@@ -11,7 +11,21 @@
       <div class="hero">
         <img src="../assets/images/banner/snift-banner-transparent.svg" alt="snift" />
       </div>
-      <section class="site-info"></section>
+      <section class="main">
+        <div id="siteinfo-container">
+          <img id="site-favicon" />
+          <p id="site-url"></p>
+        </div>
+        <div class="site-error">
+          <img src="../assets/images/questionmark.svg" alt="" id="question-mark" />
+          <p id="error-message"></p>
+        </div>
+        <div id="score-container">
+          <canvas id="snift-gauge"></canvas>
+          <p id="snift-score"></p>
+          <p id="score-label">snift score</p>
+        </div>
+      </section>
     </div>
     <script src="../scripts/popup.js"></script>
   </body>
