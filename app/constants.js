@@ -11,7 +11,7 @@ export const RANGES = {
   good: 1.0
 };
 export const SUPPORTED_PROTOCOLS = ["http:", "https:"];
-
+export const INTERNAL_BROWSER_SCHEMES = ["about:", "chrome:", "opera:"];
 export const RANGE_COLORS = {
   poor: "#ff5757",
   ok: "#ff7f50",
