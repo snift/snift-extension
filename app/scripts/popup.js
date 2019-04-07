@@ -27,6 +27,10 @@ function showError(type) {
     msg = "snift scores are available only on regular websites";
   }
   $errorMessage.innerText = msg;
+
+  // disable popup interaction
+  const $mainContainer = document.querySelector(".main");
+  $mainContainer.classList.add("disable");
 }
 
 // TODO: move colors into theme file
