@@ -8,6 +8,12 @@ export const setDefaultIcon = () => {
   browser.browserAction.setIcon({ path: sniftycons.default });
 };
 
+const notify = action => {
+  browser.runtime.sendMessage({
+    ...action
+  });
+};
+
 const changeIconByScore = score => {
   const range = findScoreRange(score);
   browser.browserAction.setIcon({
@@ -71,14 +77,28 @@ browser.tabs.onActivated.addListener(activeInfo => {
   const activeTab = browser.tabs.get(activeInfo.tabId);
   activeTab.then(tab => {
     const url = fetchOrigin(tab.url);
-    findScore(url).catch(err => handleScoreErrors(err, url));
+    // browser returns a "null" string value when origin is unavailable
+    if (!url || url !== "null") {
+      findScore(url).catch(err => handleScoreErrors(err, url));
+    } else {
+      setDefaultIcon();
+    }
   });
 });
 
 // recalculate score for a particular tab when the url in the tab changes or a new tab is added
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
+  // set site-favicon once available
+  if (changeInfo.favIconUrl) {
+    notify({ message: "set_favicon", faviconUrl: changeInfo.favIconUrl });
+  }
+
   if (changeInfo.url) {
     const url = fetchOrigin(changeInfo.url);
-    findScore(url).catch(err => handleScoreErrors(err, url));
+    if (!url || url !== "null") {
+      findScore(url).catch(err => handleScoreErrors(err, url));
+    } else {
+      setDefaultIcon();
+    }
   }
 });
