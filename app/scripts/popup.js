@@ -2,7 +2,8 @@ import { fetchAndCacheScores } from "./api";
 import { storageGet } from "../store";
 import { checkProtocolSupport, findScoreRange } from "./utils";
 import gauge from "./gauge";
-import { RANGE_COLORS, ERRORS } from "../constants";
+import { RANGE_COLORS, ERRORS, INTERNAL_BROWSER_SCHEMES } from "../constants";
+import sniftycons from "./sniftycons";
 
 const { Gauge, TextRenderer } = gauge;
 const { unknown_error, server_error, unsupported_protocol } = ERRORS;
@@ -80,28 +81,43 @@ const renderScoreGauge = siteScore => {
   scoreGauge.set(siteScore);
 };
 
+function handleNotification(notification, sender, sendResponse) {
+  if (notification.message === "set_favicon") {
+    const $siteFavicon = document.getElementById("site-favicon");
+    const currentFavicon = $siteFavicon.getAttribute("src");
+    const nextFavicon = notification.faviconUrl;
+    // set favicon if its different.
+    if (nextFavicon !== currentFavicon) {
+      $siteFavicon.setAttribute("src", notification.faviconUrl);
+    }
+  }
+}
+
+browser.runtime.onMessage.addListener(handleNotification);
+
 currentTab.then(tabs => {
-  const tab = tabs[0];
-  const { origin, protocol, hostname } = new URL(tab.url);
-  const isProtocolSupported = checkProtocolSupport(protocol);
-  const $siteUrl = document.getElementById("site-url");
-  const $siteFavicon = document.getElementById("site-favicon");
-  $siteUrl.innerText = isProtocolSupported ? hostname : origin;
-  // set favicon
-  const faviconUrl = tab.favIconUrl;
-  const faviconSource =
-    faviconUrl && faviconUrl.length > 0 ? faviconUrl : "../assets/images/icon-38.png";
-  $siteFavicon.setAttribute("src", faviconSource);
-  if (isProtocolSupported) {
-    storageGet(origin).then(function(val) {
-      if (val) {
-        const siteScore = val && val[origin] ? val[origin].scores.score * 100 : -1;
-        siteScore === -1 ? showError(unknown_error) : renderScoreGauge(siteScore);
-      } else {
-        fetchAndCacheScores(origin);
-      }
-    });
-  } else {
-    showError(unsupported_protocol);
+  for (let tab of tabs) {
+    const { origin, protocol, hostname } = new URL(tab.url);
+    const isProtocolSupported = checkProtocolSupport(protocol);
+    const isBrowserScheme = INTERNAL_BROWSER_SCHEMES.includes(protocol);
+    const $siteUrl = document.getElementById("site-url");
+    const $siteFavicon = document.getElementById("site-favicon");
+    $siteUrl.innerText = isProtocolSupported && !isBrowserScheme ? hostname : tab.url;
+    // set favicon
+    const faviconUrl = tab.favIconUrl;
+    const faviconSource = faviconUrl && faviconUrl.length > 0 ? faviconUrl : sniftycons.default;
+    $siteFavicon.setAttribute("src", faviconSource);
+    if (isProtocolSupported) {
+      storageGet(origin).then(function(val) {
+        if (val) {
+          const siteScore = val && val[origin] ? val[origin].scores.score * 100 : -1;
+          siteScore === -1 ? showError(unknown_error) : renderScoreGauge(siteScore);
+        } else {
+          fetchAndCacheScores(origin);
+        }
+      });
+    } else {
+      showError(unsupported_protocol);
+    }
   }
 });
