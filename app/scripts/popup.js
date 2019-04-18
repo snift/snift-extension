@@ -1,27 +1,42 @@
 import { fetchAndCacheScores } from "./api";
 import { storageGet } from "../store";
-import { checkProtocolSupport, findScoreRange } from "./utils";
+import { checkProtocolSupport, findScoreRange, fetchBrowserIcon } from "./utils";
 import gauge from "./gauge";
 import { RANGE_COLORS, ERRORS, INTERNAL_BROWSER_SCHEMES } from "../constants";
 import sniftycons from "./sniftycons";
 
 const { Gauge, TextRenderer } = gauge;
-const { score_error, unsupported_protocol } = ERRORS;
+const { score_error, unsupported_protocol, data_unavailable } = ERRORS;
 
-const currentTab = browser.tabs.query({
-  currentWindow: true,
-  active: true
-});
+function handleNotification(notification, sender, sendResponse) {
+  if (notification.message === "set_favicon") {
+    const $siteFavicon = document.getElementById("site-favicon");
+    const currentFavicon = $siteFavicon.getAttribute("src");
+    const nextFavicon = notification.faviconUrl;
+    // set favicon if its different.
+    if (nextFavicon !== currentFavicon) {
+      $siteFavicon.setAttribute("src", notification.faviconUrl);
+    }
+  }
+}
 
-function showError(type) {
+browser.runtime.onMessage.addListener(handleNotification);
+
+const handlePopupError = type => {
   const $siteErrorContainer = document.querySelector(".site-error");
   const $errorMessage = document.getElementById("error-message");
   const $scoreContainer = document.getElementById("score-container");
+  const $errorImage = document.getElementById("error-image");
   $siteErrorContainer.style.display = "flex";
   $scoreContainer.style.display = "none";
 
   let msg = "";
   switch (type) {
+    case ERRORS.data_unavailable:
+      msg = "loading snift scores";
+      $errorImage.setAttribute("src", sniftycons.loading);
+      break;
+
     case ERRORS.unknown_error:
       msg = "The site could not be reached due to an unknown error.";
       break;
@@ -43,7 +58,7 @@ function showError(type) {
   // disable popup interaction
   const $mainContainer = document.querySelector(".main");
   $mainContainer.classList.add("disable");
-}
+};
 
 // TODO: move colors into theme file
 const gaugeOptions = {
@@ -97,19 +112,10 @@ const renderScoreGauge = siteScore => {
   scoreGauge.set(siteScore);
 };
 
-function handleNotification(notification, sender, sendResponse) {
-  if (notification.message === "set_favicon") {
-    const $siteFavicon = document.getElementById("site-favicon");
-    const currentFavicon = $siteFavicon.getAttribute("src");
-    const nextFavicon = notification.faviconUrl;
-    // set favicon if its different.
-    if (nextFavicon !== currentFavicon) {
-      $siteFavicon.setAttribute("src", notification.faviconUrl);
-    }
-  }
-}
-
-browser.runtime.onMessage.addListener(handleNotification);
+const currentTab = browser.tabs.query({
+  currentWindow: true,
+  active: true
+});
 
 currentTab.then(tabs => {
   for (let tab of tabs) {
@@ -118,27 +124,44 @@ currentTab.then(tabs => {
     const isBrowserScheme = INTERNAL_BROWSER_SCHEMES.includes(protocol);
     const $siteUrl = document.getElementById("site-url");
     const $siteFavicon = document.getElementById("site-favicon");
+    const $scoreContainer = document.getElementById("score-container");
+    const $siteErrorContainer = document.querySelector(".site-error");
+    // disable popup interaction
+    const $mainContainer = document.querySelector(".main");
     $siteUrl.innerText = isProtocolSupported && !isBrowserScheme ? hostname : tab.url;
     // set favicon
     const faviconUrl = tab.favIconUrl;
-    const faviconSource =
-      faviconUrl && faviconUrl.length > 0 ? faviconUrl : sniftycons.notAvailable;
+    let faviconSource = faviconUrl && faviconUrl.length > 0 ? faviconUrl : sniftycons.notAvailable;
+    if (isBrowserScheme) {
+      faviconSource = fetchBrowserIcon(protocol);
+    }
     $siteFavicon.setAttribute("src", faviconSource);
     if (isProtocolSupported) {
       storageGet(origin).then(function(val) {
         if (val) {
+          if ($siteErrorContainer.style.display !== "none") {
+            $siteErrorContainer.style.display = "none";
+          }
           const siteScore = val && val[origin] ? val[origin].scores.score * 100 : -1;
-          siteScore === -1 ? showError(score_error) : renderScoreGauge(siteScore);
+          siteScore === -1 ? handlePopupError(score_error) : renderScoreGauge(siteScore);
         } else {
-          fetchAndCacheScores(origin).catch(err => {
-            if (err) {
-              showError(score_error);
-            }
-          });
+          handlePopupError(data_unavailable);
+          fetchAndCacheScores(origin)
+            .then(json => {
+              $siteErrorContainer.style.display = "none";
+              $scoreContainer.style.display = "flex";
+              $mainContainer.classList.remove("disable");
+              renderScoreGauge(json.scores.score * 100);
+            })
+            .catch(err => {
+              if (err) {
+                handlePopupError(score_error);
+              }
+            });
         }
       });
     } else {
-      showError(unsupported_protocol);
+      handlePopupError(unsupported_protocol);
     }
   }
 });

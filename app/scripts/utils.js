@@ -18,3 +18,18 @@ export const findScoreRange = score => {
 export const fetchOrigin = url => {
   return new URL(url).origin;
 };
+
+// TODO: we should probably do this using userAgent
+export const fetchBrowserIcon = protocol => {
+  const modifiedProtocol = protocol.replace(":", "");
+  switch (modifiedProtocol) {
+    case "chrome":
+      return "/assets/images/chrome.png";
+
+    case "about":
+      return "/assets/images/firefox.png";
+
+    default:
+      break;
+  }
+};
