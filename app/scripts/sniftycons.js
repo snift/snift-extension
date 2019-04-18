@@ -4,7 +4,8 @@ const sniftycons = {
   default: "/assets/images/icon.svg", // TODO: replace this icon.
   good: `${icon_path}/sniftycon-happy-green.svg`,
   ok: `${icon_path}/sniftycon-neutral-orange.svg`,
-  poor: `${icon_path}/sniftycon-red-sad.svg`
+  poor: `${icon_path}/sniftycon-red-sad.svg`,
+  notAvailable: "/assets/images/not-available.svg"
 };
 
 export default sniftycons;

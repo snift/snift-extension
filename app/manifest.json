@@ -7,6 +7,7 @@
   "default_locale": "en",
   "icons": {
     "16": "assets/images/icon-16.png",
+    "48": "assets/images/icon-48.png",
     "128": "assets/images/icon-128.png"
   },
   "background": {

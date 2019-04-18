@@ -3,7 +3,8 @@ export const ERRORS = {
   data_unavailable: "Unavailable data for requested origin. (Code: 4e8l)",
   unsupported_protocol: "Unsupported Protocol. (Code: 2da8)",
   server_error: "Unable to contact Server (Code: Ka9l)",
-  unknown_error: "Unknown Error Occured (Code: UkNw)"
+  unknown_error: "Unknown Error Occured (Code: UkNw)",
+  score_error: "Unable to calculate score (Code: ScAs)"
 };
 export const RANGES = {
   poor: 0.4,

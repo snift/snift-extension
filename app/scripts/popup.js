@@ -6,7 +6,7 @@ import { RANGE_COLORS, ERRORS, INTERNAL_BROWSER_SCHEMES } from "../constants";
 import sniftycons from "./sniftycons";
 
 const { Gauge, TextRenderer } = gauge;
-const { unknown_error, server_error, unsupported_protocol } = ERRORS;
+const { score_error, unsupported_protocol } = ERRORS;
 
 const currentTab = browser.tabs.query({
   currentWindow: true,
@@ -21,10 +21,22 @@ function showError(type) {
   $scoreContainer.style.display = "none";
 
   let msg = "";
-  if (type === ERRORS.unknown_error) {
-    msg = "The site could not be reached due to an unknown error.";
-  } else if (type === ERRORS.unsupported_protocol) {
-    msg = "snift scores are available only on regular websites";
+  switch (type) {
+    case ERRORS.unknown_error:
+      msg = "The site could not be reached due to an unknown error.";
+      break;
+
+    case ERRORS.score_error:
+      msg = "Unable to calculate score for the domain";
+      break;
+
+    case ERRORS.unsupported_protocol:
+      msg = "snift scores are available only on regular websites";
+      break;
+
+    default:
+      msg = "Sorry! An unknown error occured.";
+      break;
   }
   $errorMessage.innerText = msg;
 
@@ -109,15 +121,20 @@ currentTab.then(tabs => {
     $siteUrl.innerText = isProtocolSupported && !isBrowserScheme ? hostname : tab.url;
     // set favicon
     const faviconUrl = tab.favIconUrl;
-    const faviconSource = faviconUrl && faviconUrl.length > 0 ? faviconUrl : sniftycons.default;
+    const faviconSource =
+      faviconUrl && faviconUrl.length > 0 ? faviconUrl : sniftycons.notAvailable;
     $siteFavicon.setAttribute("src", faviconSource);
     if (isProtocolSupported) {
       storageGet(origin).then(function(val) {
         if (val) {
           const siteScore = val && val[origin] ? val[origin].scores.score * 100 : -1;
-          siteScore === -1 ? showError(unknown_error) : renderScoreGauge(siteScore);
+          siteScore === -1 ? showError(score_error) : renderScoreGauge(siteScore);
         } else {
-          fetchAndCacheScores(origin);
+          fetchAndCacheScores(origin).catch(err => {
+            if (err) {
+              showError(score_error);
+            }
+          });
         }
       });
     } else {
