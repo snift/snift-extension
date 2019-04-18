@@ -131,7 +131,7 @@ currentTab.then(tabs => {
     $siteUrl.innerText = isProtocolSupported && !isBrowserScheme ? hostname : tab.url;
     // set favicon
     const faviconUrl = tab.favIconUrl;
-    let faviconSource = faviconUrl && faviconUrl.length > 0 ? faviconUrl : sniftycons.notAvailable;
+    let faviconSource = faviconUrl && faviconUrl.length > 0 ? faviconUrl : sniftycons.tabLoading;
     if (isBrowserScheme) {
       faviconSource = fetchBrowserIcon(protocol);
     }
