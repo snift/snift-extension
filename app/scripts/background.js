@@ -9,9 +9,8 @@ export const setDefaultIcon = () => {
 };
 
 const notify = action => {
-  browser.runtime.sendMessage({
-    ...action
-  });
+  // ignore notifier errors when popup isnt open
+  browser.runtime.sendMessage({ ...action }).catch(() => browser.runtime.lastError);
 };
 
 const changeIconByScore = score => {
@@ -33,8 +32,8 @@ const findScore = async url => {
       const data = await storageGet(origin);
       if (!data) throw new Error(ERRORS.data_unavailable);
       else {
-        const { scores } = data[origin];
-        changeIconByScore(scores.score);
+        const { score } = data.scores;
+        changeIconByScore(score);
       }
     } else {
       throw new Error(ERRORS.unsupported_protocol);
@@ -64,11 +63,9 @@ const handleScoreErrors = (err, url) => {
 
 // LISTENERS
 // respond to async runtime event messages
-browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "update_icon") {
-    changeIconByScore(message.value);
-  } else if (message.action === "set_default_icon") {
-    setDefaultIcon();
+browser.runtime.onMessage.addListener((notification, sender, sendResponse) => {
+  if (notification.action === "set_favicon") {
+    console.log(`Setting Changed Favicon for ${notification.faviconUrl}`);
   }
 });
 
@@ -90,7 +87,7 @@ browser.tabs.onActivated.addListener(activeInfo => {
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
   // set site-favicon once available
   if (changeInfo.favIconUrl) {
-    notify({ message: "set_favicon", faviconUrl: changeInfo.favIconUrl });
+    notify({ action: "set_favicon", faviconUrl: changeInfo.favIconUrl });
   }
 
   if (changeInfo.url) {
