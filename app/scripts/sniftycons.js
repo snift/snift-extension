@@ -7,7 +7,8 @@ const sniftycons = {
   poor: `${icon_path}/sniftycon-red-sad.svg`,
   notAvailable: "/assets/images/not-available.svg",
   loading: "/assets/images/loader.gif",
-  tabLoading: "/assets/images/heart.gif"
+  tabLoading: "/assets/images/heart.gif",
+  error: "../assets/images/error.svg"
 };
 
 export default sniftycons;
