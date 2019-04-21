@@ -1,4 +1,5 @@
-export const API_URL = "http://localhost:9700/scores";
+export const API_URL = "http://localhost.snift.io:9700";
+export const TOKEN_TTL = 23; // token lives for 23 hours
 export const ERRORS = {
   data_unavailable: "Unavailable data for requested origin. (Code: 4e8l)",
   unsupported_protocol: "Unsupported Protocol. (Code: 2da8)",
