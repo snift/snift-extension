@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Popup</title>
+    <link rel="stylesheet" type="text/css" href="../assets/fonts/manrope/font.css" />
+    <link rel="stylesheet" type="text/css" href="../styles/popup.css" />
+  </head>
+  <body>
+    <div id="popup-container">
+      <div class="hero">
+        <img src="../assets/logo/banner/snift-banner-transparent.svg" alt="snift" />
+      </div>
+      <div id="siteinfo-container">
+        <img id="site-favicon" />
+        <p id="site-url"></p>
+      </div>
+      <section class="main">
+        <div class="site-error">
+          <img src="../assets/images/error.svg" alt="" id="error-image" />
+          <p id="error-message"></p>
+        </div>
+        <div id="score-container">
+          <canvas id="snift-gauge"></canvas>
+          <p id="snift-score"></p>
+          <p id="score-label">snift score</p>
+        </div>
+      </section>
+    </div>
+    <script src="../scripts/popup.js"></script>
+  </body>
+</html>
