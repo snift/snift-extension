@@ -62,12 +62,6 @@ const handleScoreErrors = (err, url) => {
 };
 
 // LISTENERS
-// respond to async runtime event messages
-browser.runtime.onMessage.addListener((notification, sender, sendResponse) => {
-  if (notification.action === "set_favicon") {
-    console.log(`Setting Changed Favicon for ${notification.faviconUrl}`);
-  }
-});
 
 // changeIcon whenever the activeTab is changed
 browser.tabs.onActivated.addListener(activeInfo => {
