@@ -33,3 +33,9 @@ export const fetchBrowserIcon = protocol => {
       break;
   }
 };
+
+export const getTokenDuration = (createdAt, expiresAt) => {
+  const diffInMs = (expiresAt - createdAt) / 1000;
+  const diffInHours = diffInMs / 3600;
+  return Math.abs(Math.round(diffInHours));
+};

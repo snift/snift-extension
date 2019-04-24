@@ -9,7 +9,7 @@ const { Gauge, TextRenderer } = gauge;
 const { score_error, unsupported_protocol, data_unavailable } = ERRORS;
 
 function handleNotification(notification, sender, sendResponse) {
-  if (notification.message === "set_favicon") {
+  if (notification.action === "set_favicon") {
     const $siteFavicon = document.getElementById("site-favicon");
     const currentFavicon = $siteFavicon.getAttribute("src");
     const nextFavicon = notification.faviconUrl;
@@ -30,11 +30,13 @@ const handlePopupError = type => {
   $siteErrorContainer.style.display = "flex";
   $scoreContainer.style.display = "none";
 
+  let isLoading = false;
   let msg = "";
+
   switch (type) {
     case ERRORS.data_unavailable:
+      isLoading = true;
       msg = "loading snift scores";
-      $errorImage.setAttribute("src", sniftycons.loading);
       break;
 
     case ERRORS.unknown_error:
@@ -54,7 +56,8 @@ const handlePopupError = type => {
       break;
   }
   $errorMessage.innerText = msg;
-
+  const errorImageSource = isLoading ? sniftycons.loading : sniftycons.error;
+  $errorImage.setAttribute("src", errorImageSource);
   // disable popup interaction
   const $mainContainer = document.querySelector(".main");
   $mainContainer.classList.add("disable");
@@ -142,7 +145,7 @@ currentTab.then(tabs => {
           if ($siteErrorContainer.style.display !== "none") {
             $siteErrorContainer.style.display = "none";
           }
-          const siteScore = val && val[origin] ? val[origin].scores.score * 100 : -1;
+          const siteScore = val && val.scores ? val.scores.score * 100 : -1;
           siteScore === -1 ? handlePopupError(score_error) : renderScoreGauge(siteScore);
         } else {
           handlePopupError(data_unavailable);

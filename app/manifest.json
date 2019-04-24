@@ -21,5 +21,5 @@
     "default_title": "__MSG_browserActionTitle__",
     "default_popup": "pages/popup.html"
   },
-  "permissions": ["activeTab", "tabs", "storage"]
+  "permissions": ["activeTab", "tabs", "storage", "http://*.snift.io:9700/"]
 }
