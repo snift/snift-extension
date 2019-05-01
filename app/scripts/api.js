@@ -10,7 +10,6 @@ export const validateToken = token => {
 };
 
 export const getToken = async () => {
-  browser.storage.local.clear();
   let token = await storageGet("token");
   if (!token || !token.value) {
     token = await fetchApiToken();
