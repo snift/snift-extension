@@ -1,11 +1,11 @@
 import { fetchAndCacheScores } from "./api";
 import { ERRORS } from "../constants";
-import sniftycons from "./sniftycons";
+import icons from "./icons";
 import { storageGet } from "../store";
 import { checkProtocolSupport, fetchOrigin, findScoreRange } from "./utils";
 
 export const setDefaultIcon = () => {
-  browser.browserAction.setIcon({ path: sniftycons.default });
+  browser.browserAction.setIcon({ path: icons.default });
 };
 
 const notify = action => {
@@ -16,7 +16,7 @@ const notify = action => {
 const changeIconByScore = score => {
   const range = findScoreRange(score);
   browser.browserAction.setIcon({
-    path: sniftycons[range]
+    path: icons.sniftycons[range]
   });
 };
 
