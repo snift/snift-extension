@@ -3,7 +3,7 @@ import { storageGet } from "../store";
 import { checkProtocolSupport, findScoreRange, fetchBrowserIcon } from "./utils";
 import gauge from "./gauge";
 import { RANGE_COLORS, ERRORS, INTERNAL_BROWSER_SCHEMES } from "../constants";
-import sniftycons from "./sniftycons";
+import icons from "./icons";
 
 const { Gauge, TextRenderer } = gauge;
 const { score_error, unsupported_protocol, data_unavailable } = ERRORS;
@@ -26,9 +26,12 @@ const handlePopupError = type => {
   const $siteErrorContainer = document.querySelector(".site-error");
   const $errorMessage = document.getElementById("error-message");
   const $scoreContainer = document.getElementById("score-container");
+  const $badgeContainer = document.getElementById("badge-container");
+
   const $errorImage = document.getElementById("error-image");
   $siteErrorContainer.style.display = "flex";
   $scoreContainer.style.display = "none";
+  $badgeContainer.style.visibility = "hidden";
 
   let isLoading = false;
   let msg = "";
@@ -56,7 +59,8 @@ const handlePopupError = type => {
       break;
   }
   $errorMessage.innerText = msg;
-  const errorImageSource = isLoading ? sniftycons.loading : sniftycons.error;
+  const popupIcons = icons.popup;
+  const errorImageSource = isLoading ? popupIcons.content.loading : popupIcons.content.error;
   $errorImage.setAttribute("src", errorImageSource);
   // disable popup interaction
   const $mainContainer = document.querySelector(".main");
@@ -115,6 +119,80 @@ const renderScoreGauge = siteScore => {
   scoreGauge.set(siteScore);
 };
 
+
+const rangeToCssFilter = range => {
+  switch (range) {
+    // #3edd80
+    case "good":
+      return "invert(73%) sepia(74%) saturate(447%) hue-rotate(82deg) brightness(60%) contrast(80%)";
+
+    // #ff6a33
+    case "ok":
+      return "invert(56%) sepia(66%) saturate(2908%) hue-rotate(337deg) brightness(90%) contrast(120%)";
+
+    // #ff5757
+    case "poor":
+      return "invert(53%) sepia(88%) saturate(1718%) hue-rotate(323deg) brightness(97%) contrast(107%)";
+
+    default:
+      break;
+  }
+};
+
+const rangeToBackground = range => {
+  switch (range) {
+    // #3edd80
+    case "good":
+      return "rgb(200, 255, 223)";
+
+    // #ff6a33
+    case "ok":
+      return "rgb(255, 226, 216)";
+
+    // #ff5757
+    case "poor":
+      return "rgb(255, 204, 204)";
+
+    default:
+      break;
+  }
+};
+
+const renderBadges = badges => {
+  const $badgeListContainer = document.getElementById("badge-list");
+  const badgeBackgroundColor = rangeToBackground("good");
+  const badgeImageColor = rangeToCssFilter("good");
+  // const { badgeColor, badgeBackground } = getBadgeColors(score);
+  badges.forEach(badge => {
+    const badgeId = badge.name;
+    const $badgeItem = document.createElement("li");
+    $badgeItem.setAttribute("class", "badge-item");
+    $badgeItem.style.setProperty("background-color", badgeBackgroundColor);
+    // $badgeItem.innerText = badge.name;
+    const $badgeImage = document.createElement("img");
+    $badgeImage.setAttribute("class", "badge-image");
+    $badgeImage.setAttribute("src", icons.badges[badgeId]);
+
+    $badgeImage.style.setProperty("filter", badgeImageColor);
+    $badgeItem.appendChild($badgeImage);
+    $badgeListContainer.appendChild($badgeItem);
+  });
+};
+
+const render = val => {
+  let siteScore, siteBadges;
+  if (val && val.scores) {
+    siteScore = val.scores.score * 100;
+    siteBadges = val.scores.badges;
+  }
+  if (!siteScore || !siteBadges) {
+    handlePopupError(score_error);
+  } else {
+    renderScoreGauge(siteScore);
+    renderBadges(siteBadges, siteScore);
+  }
+};
+
 const currentTab = browser.tabs.query({
   currentWindow: true,
   active: true
@@ -134,7 +212,7 @@ currentTab.then(tabs => {
     $siteUrl.innerText = isProtocolSupported && !isBrowserScheme ? hostname : tab.url;
     // set favicon
     const faviconUrl = tab.favIconUrl;
-    let faviconSource = faviconUrl && faviconUrl.length > 0 ? faviconUrl : sniftycons.tabLoading;
+    let faviconSource = faviconUrl && faviconUrl.length > 0 ? faviconUrl : icons.popup.tab.loading;
     if (isBrowserScheme) {
       faviconSource = fetchBrowserIcon(protocol);
     }
@@ -145,8 +223,7 @@ currentTab.then(tabs => {
           if ($siteErrorContainer.style.display !== "none") {
             $siteErrorContainer.style.display = "none";
           }
-          const siteScore = val && val.scores ? val.scores.score * 100 : -1;
-          siteScore === -1 ? handlePopupError(score_error) : renderScoreGauge(siteScore);
+          render(val);
         } else {
           handlePopupError(data_unavailable);
           fetchAndCacheScores(origin)
