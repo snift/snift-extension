@@ -11,7 +11,7 @@
     "webextension-toolbox": "latest"
   },
   "dependencies": {
-    "axios": "^0.18.0",
+    "axios": "^0.18.1",
     "is-empty": "^1.2.0"
   }
 }
