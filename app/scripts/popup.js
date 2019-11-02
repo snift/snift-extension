@@ -2,7 +2,7 @@ import { fetchAndCacheScores } from "./api";
 import { storageGet } from "../store";
 import { checkProtocolSupport, findScoreRange, fetchBrowserIcon } from "./utils";
 import gauge from "./gauge";
-import { RANGE_COLORS, ERRORS, INTERNAL_BROWSER_SCHEMES } from "../constants";
+import { RANGE_COLORS, ERRORS, INTERNAL_BROWSER_SCHEMES, BADGE_CATEGORIES } from "../constants";
 import icons from "./icons";
 
 const { Gauge, TextRenderer } = gauge;
@@ -119,7 +119,6 @@ const renderScoreGauge = siteScore => {
   scoreGauge.set(siteScore);
 };
 
-
 const rangeToCssFilter = range => {
   switch (range) {
     // #3edd80
@@ -139,42 +138,57 @@ const rangeToCssFilter = range => {
   }
 };
 
-const rangeToBackground = range => {
-  switch (range) {
-    // #3edd80
-    case "good":
-      return "rgb(200, 255, 223)";
 
-    // #ff6a33
-    case "ok":
-      return "rgb(255, 226, 216)";
-
-    // #ff5757
-    case "poor":
-      return "rgb(255, 204, 204)";
-
-    default:
-      break;
-  }
+const calculateBadgeScores = badgeCategories => {
+  const badgeScores = {};
+  badgeCategories.forEach(category => {
+    if (badgeScores[category]) badgeScores[category]++;
+    else badgeScores[category] = 1;
+  });
+  return badgeScores;
 };
 
 const renderBadges = badges => {
   const $badgeListContainer = document.getElementById("badge-list");
-  const badgeBackgroundColor = rangeToBackground("good");
-  const badgeImageColor = rangeToCssFilter("good");
-  // const { badgeColor, badgeBackground } = getBadgeColors(score);
-  badges.forEach(badge => {
-    const badgeId = badge.name;
+  const badgeScores = calculateBadgeScores(badges.map(badge => badge.category));
+
+  Object.keys(BADGE_CATEGORIES).forEach(badgeCategory => {
     const $badgeItem = document.createElement("li");
     $badgeItem.setAttribute("class", "badge-item");
-    $badgeItem.style.setProperty("background-color", badgeBackgroundColor);
-    // $badgeItem.innerText = badge.name;
-    const $badgeImage = document.createElement("img");
-    $badgeImage.setAttribute("class", "badge-image");
-    $badgeImage.setAttribute("src", icons.badges[badgeId]);
 
-    $badgeImage.style.setProperty("filter", badgeImageColor);
-    $badgeItem.appendChild($badgeImage);
+    const $badgeImage = document.createElement("div");
+    $badgeImage.setAttribute("class", "badge-image");
+    $badgeImage.setAttribute("alt", badgeCategory);
+
+    const $badgeContents = document.createElement("div");
+    $badgeContents.setAttribute("class", "badge-contents-container");
+
+    const isBadgeAvailable = !!badgeScores[badgeCategory];
+    const badgeNotAvailableImageSrc = `NO_${badgeCategory}`;
+    const badgeImageSource = isBadgeAvailable
+      ? icons.badges[badgeCategory]
+      : icons.badges[badgeNotAvailableImageSrc];
+
+    $badgeImage.style.setProperty("background-image", `url("${badgeImageSource}")`);
+
+    const $badgeCategory = document.createElement("p");
+    $badgeCategory.setAttribute("class", "badge-category");
+
+    let badgeCategoryText = BADGE_CATEGORIES[badgeCategory];
+    if (!isBadgeAvailable) {
+      badgeCategoryText = `Bad ${badgeCategoryText}`;
+      const regex = /Policies|Protection|Headers/;
+      if (!(regex.test(badgeCategoryText))) {
+        badgeCategoryText = `${badgeCategoryText} Headers`;
+      }
+    }
+
+    $badgeCategory.innerText = badgeCategoryText;
+
+    $badgeContents.appendChild($badgeImage);
+    $badgeContents.appendChild($badgeCategory);
+
+    $badgeItem.appendChild($badgeContents);
     $badgeListContainer.appendChild($badgeItem);
   });
 };
