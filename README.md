@@ -23,3 +23,7 @@ The browser extension for measuring the web's security. It uses webextension-too
 ## Environment
 
 The build tool also defines a variable named `process.env.NODE_ENV` in your scripts.
+
+## Credits
+
+Badge Icons made by [Icongeek26](https://www.flaticon.com/authors/icongeek26)
