@@ -2,8 +2,8 @@ import { fetchAndCacheScores } from "./api";
 import { storageGet } from "../store";
 import { checkProtocolSupport, findScoreRange, fetchBrowserIcon } from "./utils";
 import gauge from "./gauge";
-import { RANGE_COLORS, ERRORS, INTERNAL_BROWSER_SCHEMES } from "../constants";
-import sniftycons from "./sniftycons";
+import { RANGE_COLORS, ERRORS, INTERNAL_BROWSER_SCHEMES, BADGE_CATEGORIES } from "../constants";
+import icons from "./icons";
 
 const { Gauge, TextRenderer } = gauge;
 const { score_error, unsupported_protocol, data_unavailable } = ERRORS;
@@ -26,9 +26,12 @@ const handlePopupError = type => {
   const $siteErrorContainer = document.querySelector(".site-error");
   const $errorMessage = document.getElementById("error-message");
   const $scoreContainer = document.getElementById("score-container");
+  const $badgeContainer = document.getElementById("badge-container");
+
   const $errorImage = document.getElementById("error-image");
   $siteErrorContainer.style.display = "flex";
   $scoreContainer.style.display = "none";
+  $badgeContainer.style.visibility = "hidden";
 
   let isLoading = false;
   let msg = "";
@@ -56,7 +59,8 @@ const handlePopupError = type => {
       break;
   }
   $errorMessage.innerText = msg;
-  const errorImageSource = isLoading ? sniftycons.loading : sniftycons.error;
+  const popupIcons = icons.popup;
+  const errorImageSource = isLoading ? popupIcons.content.loading : popupIcons.content.error;
   $errorImage.setAttribute("src", errorImageSource);
   // disable popup interaction
   const $mainContainer = document.querySelector(".main");
@@ -115,6 +119,94 @@ const renderScoreGauge = siteScore => {
   scoreGauge.set(siteScore);
 };
 
+const rangeToCssFilter = range => {
+  switch (range) {
+    // #3edd80
+    case "good":
+      return "invert(73%) sepia(74%) saturate(447%) hue-rotate(82deg) brightness(60%) contrast(80%)";
+
+    // #ff6a33
+    case "ok":
+      return "invert(56%) sepia(66%) saturate(2908%) hue-rotate(337deg) brightness(90%) contrast(120%)";
+
+    // #ff5757
+    case "poor":
+      return "invert(53%) sepia(88%) saturate(1718%) hue-rotate(323deg) brightness(97%) contrast(107%)";
+
+    default:
+      break;
+  }
+};
+
+
+const calculateBadgeScores = badgeCategories => {
+  const badgeScores = {};
+  badgeCategories.forEach(category => {
+    if (badgeScores[category]) badgeScores[category]++;
+    else badgeScores[category] = 1;
+  });
+  return badgeScores;
+};
+
+const renderBadges = badges => {
+  const $badgeListContainer = document.getElementById("badge-list");
+  const badgeScores = calculateBadgeScores(badges.map(badge => badge.category));
+
+  Object.keys(BADGE_CATEGORIES).forEach(badgeCategory => {
+    const $badgeItem = document.createElement("li");
+    $badgeItem.setAttribute("class", "badge-item");
+
+    const $badgeImage = document.createElement("div");
+    $badgeImage.setAttribute("class", "badge-image");
+    $badgeImage.setAttribute("alt", badgeCategory);
+
+    const $badgeContents = document.createElement("div");
+    $badgeContents.setAttribute("class", "badge-contents-container");
+
+    const isBadgeAvailable = !!badgeScores[badgeCategory];
+    const badgeNotAvailableImageSrc = `NO_${badgeCategory}`;
+    const badgeImageSource = isBadgeAvailable
+      ? icons.badges[badgeCategory]
+      : icons.badges[badgeNotAvailableImageSrc];
+
+    $badgeImage.style.setProperty("background-image", `url("${badgeImageSource}")`);
+
+    const $badgeCategory = document.createElement("p");
+    $badgeCategory.setAttribute("class", "badge-category");
+
+    let badgeCategoryText = BADGE_CATEGORIES[badgeCategory];
+    if (!isBadgeAvailable) {
+      badgeCategoryText = `Bad ${badgeCategoryText}`;
+      const regex = /Policies|Protection|Headers/;
+      if (!(regex.test(badgeCategoryText))) {
+        badgeCategoryText = `${badgeCategoryText} Headers`;
+      }
+    }
+
+    $badgeCategory.innerText = badgeCategoryText;
+
+    $badgeContents.appendChild($badgeImage);
+    $badgeContents.appendChild($badgeCategory);
+
+    $badgeItem.appendChild($badgeContents);
+    $badgeListContainer.appendChild($badgeItem);
+  });
+};
+
+const render = val => {
+  let siteScore, siteBadges;
+  if (val && val.scores) {
+    siteScore = val.scores.score * 100;
+    siteBadges = val.scores.badges;
+  }
+  if (!siteScore || !siteBadges) {
+    handlePopupError(score_error);
+  } else {
+    renderScoreGauge(siteScore);
+    renderBadges(siteBadges, siteScore);
+  }
+};
+
 const currentTab = browser.tabs.query({
   currentWindow: true,
   active: true
@@ -134,7 +226,7 @@ currentTab.then(tabs => {
     $siteUrl.innerText = isProtocolSupported && !isBrowserScheme ? hostname : tab.url;
     // set favicon
     const faviconUrl = tab.favIconUrl;
-    let faviconSource = faviconUrl && faviconUrl.length > 0 ? faviconUrl : sniftycons.tabLoading;
+    let faviconSource = faviconUrl && faviconUrl.length > 0 ? faviconUrl : icons.popup.tab.loading;
     if (isBrowserScheme) {
       faviconSource = fetchBrowserIcon(protocol);
     }
@@ -145,8 +237,7 @@ currentTab.then(tabs => {
           if ($siteErrorContainer.style.display !== "none") {
             $siteErrorContainer.style.display = "none";
           }
-          const siteScore = val && val.scores ? val.scores.score * 100 : -1;
-          siteScore === -1 ? handlePopupError(score_error) : renderScoreGauge(siteScore);
+          render(val);
         } else {
           handlePopupError(data_unavailable);
           fetchAndCacheScores(origin)

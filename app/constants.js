@@ -7,6 +7,14 @@ export const ERRORS = {
   unknown_error: "Unknown Error Occured (Code: UkNw)",
   score_error: "Unable to calculate score (Code: ScAs)"
 };
+
+export const BADGE_CATEGORIES = {
+  NETWORK_PROTECTION: "Network Protection",
+  USER_PRIVACY: "User Privacy",
+  EAVESDROPPING_SPOOFING_PROTECTION: "Email Spoofing & MITM Protection",
+  CONTENT_SECURITY: "Content Security"
+};
+
 export const RANGES = {
   poor: 0.4,
   ok: 0.7,
