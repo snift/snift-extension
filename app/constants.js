@@ -1,3 +1,5 @@
+import Colors from "./scripts/colors";
+
 export const API_URL = "http://localhost.snift.io:9700";
 export const TOKEN_TTL = 23; // token lives for 23 hours
 export const ERRORS = {
@@ -23,7 +25,7 @@ export const RANGES = {
 export const SUPPORTED_PROTOCOLS = ["http:", "https:"];
 export const INTERNAL_BROWSER_SCHEMES = ["about:", "chrome:", "opera:"];
 export const RANGE_COLORS = {
-  poor: "#ff5757",
-  ok: "#ff7f50",
-  good: "#07be53"
+  poor: Colors.lightRed,
+  ok: Colors.mediumOrange,
+  good: Colors.darkSpringGreen
 };

@@ -45,17 +45,13 @@ const findScore = async url => {
 
 // handle errors thrown by findScore
 const handleScoreErrors = (err, url) => {
-  const { data_unavailable, unsupported_protocol } = ERRORS;
   switch (err.message) {
-    case data_unavailable:
+    case ERRORS.data_unavailable:
       fetchAndCacheScores(url).then(json => changeIconByScore(json.scores.score));
       break;
 
-    case unsupported_protocol:
-      setDefaultIcon();
-      break;
-
     default:
+      setDefaultIcon();
       console.error(err.message);
       break;
   }

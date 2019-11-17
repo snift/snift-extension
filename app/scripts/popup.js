@@ -4,6 +4,7 @@ import { checkProtocolSupport, findScoreRange, fetchBrowserIcon } from "./utils"
 import gauge from "./gauge";
 import { RANGE_COLORS, ERRORS, INTERNAL_BROWSER_SCHEMES, BADGE_CATEGORIES } from "../constants";
 import icons from "./icons";
+import Colors from "./colors";
 
 const { Gauge, TextRenderer } = gauge;
 const { score_error, unsupported_protocol, data_unavailable } = ERRORS;
@@ -39,7 +40,7 @@ const handlePopupError = type => {
   switch (type) {
     case ERRORS.data_unavailable:
       isLoading = true;
-      msg = "loading snift scores";
+      msg = "Loading Snift Scores";
       break;
 
     case ERRORS.unknown_error:
@@ -47,11 +48,11 @@ const handlePopupError = type => {
       break;
 
     case ERRORS.score_error:
-      msg = "Unable to calculate score for the domain";
+      msg = "Unable to calculate Snift Score for the domain";
       break;
 
     case ERRORS.unsupported_protocol:
-      msg = "snift scores are available only on regular websites";
+      msg = "Snift Scores are available only on regular websites";
       break;
 
     default:
@@ -65,6 +66,8 @@ const handlePopupError = type => {
   // disable popup interaction
   const $mainContainer = document.querySelector(".main");
   $mainContainer.classList.add("disable");
+
+  document.querySelector("body").style.backgroundColor = Colors.mediumGrey;
 };
 
 // TODO: move colors into theme file
@@ -81,21 +84,21 @@ const gaugeOptions = {
   limitMin: false,
   limitMax: true,
   percentColors: [
-    [0.0, "#ff0000"],
-    [0.3, "#ff5757"],
-    [0.4, "#ff6a33"],
-    [0.69, "#ff895e"],
-    [0.7, "#3edd80"],
-    [1.0, "#00d370"]
-  ], // !!!!
-  strokeColor: "#ebebeb",
+    [0.0, Colors.red],
+    [0.3, Colors.lightRed],
+    [0.4, Colors.orange],
+    [0.69, Colors.lightOrange],
+    [0.7, Colors.lightSpringGreen],
+    [1.0, Colors.springGreen]
+  ],
+  strokeColor: Colors.lightGrey,
   generateGradient: true
 };
 
-const renderScoreGauge = siteScore => {
+const renderScoreGauge = (siteScore, disableAnimation = true) => {
   const $gaugeContainer = document.getElementById("snift-gauge");
   const scoreGauge = new Gauge($gaugeContainer).setOptions(gaugeOptions);
-  scoreGauge.animationSpeed = 10;
+  scoreGauge.animationSpeed = disableAnimation ? 1 : 10;
   scoreGauge.setMinValue(0);
   scoreGauge.maxValue = 100;
 
@@ -118,26 +121,6 @@ const renderScoreGauge = siteScore => {
   scoreGauge.setTextField(sniftScoreRenderer);
   scoreGauge.set(siteScore);
 };
-
-const rangeToCssFilter = range => {
-  switch (range) {
-    // #3edd80
-    case "good":
-      return "invert(73%) sepia(74%) saturate(447%) hue-rotate(82deg) brightness(60%) contrast(80%)";
-
-    // #ff6a33
-    case "ok":
-      return "invert(56%) sepia(66%) saturate(2908%) hue-rotate(337deg) brightness(90%) contrast(120%)";
-
-    // #ff5757
-    case "poor":
-      return "invert(53%) sepia(88%) saturate(1718%) hue-rotate(323deg) brightness(97%) contrast(107%)";
-
-    default:
-      break;
-  }
-};
-
 
 const calculateBadgeScores = badgeCategories => {
   const badgeScores = {};
@@ -178,7 +161,7 @@ const renderBadges = badges => {
     if (!isBadgeAvailable) {
       badgeCategoryText = `Bad ${badgeCategoryText}`;
       const regex = /Policies|Protection|Headers/;
-      if (!(regex.test(badgeCategoryText))) {
+      if (!regex.test(badgeCategoryText)) {
         badgeCategoryText = `${badgeCategoryText} Headers`;
       }
     }
@@ -193,7 +176,7 @@ const renderBadges = badges => {
   });
 };
 
-const render = val => {
+const render = (val, isCached = false) => {
   let siteScore, siteBadges;
   if (val && val.scores) {
     siteScore = val.scores.score * 100;
@@ -202,7 +185,7 @@ const render = val => {
   if (!siteScore || !siteBadges) {
     handlePopupError(score_error);
   } else {
-    renderScoreGauge(siteScore);
+    renderScoreGauge(siteScore, isCached);
     renderBadges(siteBadges, siteScore);
   }
 };
@@ -237,7 +220,7 @@ currentTab.then(tabs => {
           if ($siteErrorContainer.style.display !== "none") {
             $siteErrorContainer.style.display = "none";
           }
-          render(val);
+          render(val, true);
         } else {
           handlePopupError(data_unavailable);
           fetchAndCacheScores(origin)
