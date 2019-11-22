@@ -1,4 +1,4 @@
-import Colors from "./scripts/colors";
+import Colors from "./scripts/theme";
 
 export const API_URL = "http://localhost.snift.io:9700";
 export const TOKEN_TTL = 23; // token lives for 23 hours
