@@ -1,15 +1,22 @@
-import { fetchAndCacheScores } from "./api";
+import {
+  BADGE_CATEGORIES,
+  ERRORS,
+  INTERNAL_BROWSER_SCHEMES,
+  RANGE_COLORS,
+  BADGE_SUBCATEGORIES,
+  EXPLANATIONS
+} from "../constants";
 import { storageGet } from "../store";
-import { checkProtocolSupport, findScoreRange, fetchBrowserIcon } from "./utils";
+import { fetchAndCacheScores } from "./api";
+import Colors from "./theme";
 import gauge from "./gauge";
-import { RANGE_COLORS, ERRORS, INTERNAL_BROWSER_SCHEMES, BADGE_CATEGORIES } from "../constants";
 import icons from "./icons";
-import Colors from "./colors";
+import { checkProtocolSupport, fetchBrowserIcon, findScoreRange } from "./utils";
 
 const { Gauge, TextRenderer } = gauge;
 const { score_error, unsupported_protocol, data_unavailable } = ERRORS;
 
-function handleNotification(notification, sender, sendResponse) {
+function handleNotification(notification) {
   if (notification.action === "set_favicon") {
     const $siteFavicon = document.getElementById("site-favicon");
     const currentFavicon = $siteFavicon.getAttribute("src");
@@ -32,7 +39,7 @@ const handlePopupError = type => {
   const $errorImage = document.getElementById("error-image");
   $siteErrorContainer.style.display = "flex";
   $scoreContainer.style.display = "none";
-  $badgeContainer.style.visibility = "hidden";
+  $badgeContainer.style.display = "none";
 
   let isLoading = false;
   let msg = "";
@@ -64,13 +71,119 @@ const handlePopupError = type => {
   const errorImageSource = isLoading ? popupIcons.content.loading : popupIcons.content.error;
   $errorImage.setAttribute("src", errorImageSource);
   // disable popup interaction
-  const $mainContainer = document.querySelector(".main");
   $mainContainer.classList.add("disable");
 
   document.querySelector("body").style.backgroundColor = Colors.mediumGrey;
 };
 
-// TODO: move colors into theme file
+const $mainContainer = document.querySelector("#main");
+
+const countBadgeScoresByCategory = badgeCategories => {
+  const count = {};
+  badgeCategories.forEach(category => {
+    if (count[category]) count[category]++;
+    else count[category] = 1;
+  });
+  return count;
+};
+
+const getBadgeAntiMessage = message => {
+  const [messageBeginning, ...restOfTheMessage] = message.split(" ");
+  switch (messageBeginning) {
+    case "Prevention":
+    case "Protection":
+      return `No ${message}`;
+    case "Enforces":
+      return `Doesn't Enforce ${restOfTheMessage.join(" ")}`;
+    case "Uses":
+      return `Doesn't Use ${restOfTheMessage.join(" ")}`;
+    default:
+      return `No ${message}`;
+  }
+};
+
+const renderBadgeExplanations = (selectedBadgeCategory, badgeCategoryText, badges) => {
+  const subcategories = BADGE_SUBCATEGORIES[selectedBadgeCategory];
+  const currentBadge = badges
+    .filter(bdg => bdg.category === selectedBadgeCategory)
+    .reduce((obj, item) => Object.assign(obj, { [item.name]: item.message }), {});
+  const $explanationList = document.getElementById("explanation-list");
+  while ($explanationList.firstChild) {
+    $explanationList.removeChild($explanationList.firstChild);
+  }
+  const $categoryTitle = document.getElementById("category-title");
+  $categoryTitle.innerText = badgeCategoryText;
+  subcategories.forEach(sc => {
+    let message = "";
+    const $explanationListItem = document.createElement("li");
+    if (currentBadge[sc]) {
+      message = currentBadge[sc];
+      $explanationListItem.classList.add("metric-pass");
+    } else {
+      message = getBadgeAntiMessage(EXPLANATIONS[sc]);
+      $explanationListItem.classList.add("metric-fail");
+    }
+    $explanationListItem.innerText = message;
+    $explanationList.append($explanationListItem);
+  });
+
+  const $goBack = document.getElementById("go-back");
+  $goBack.onclick = () => {
+    document.querySelector("#explanation-view").style.display = "none";
+    document.querySelector("#main").style.display = "flex";
+    document.querySelector("#popup-container").style.display = "flex";
+  };
+};
+
+const renderBadges = badges => {
+  const $badgeListContainer = document.getElementById("badge-list");
+  const badgeCount = countBadgeScoresByCategory(badges.map(badge => badge.category));
+  Object.keys(BADGE_CATEGORIES).forEach(badgeCategory => {
+    const $badgeItem = document.createElement("li");
+    $badgeItem.setAttribute("class", "badge-item");
+
+    const $badgeImage = document.createElement("div");
+    $badgeImage.setAttribute("class", "badge-image");
+    $badgeImage.setAttribute("alt", badgeCategory);
+
+    const $badgeContents = document.createElement("div");
+    $badgeContents.setAttribute("class", "badge-contents-container");
+
+    const isBadgeAvailable = !!badgeCount[badgeCategory];
+    const badgeNotAvailableImageSrc = `NO_${badgeCategory}`;
+    const badgeImageSource = isBadgeAvailable
+      ? icons.badges[badgeCategory]
+      : icons.badges[badgeNotAvailableImageSrc];
+
+    $badgeImage.style.setProperty("background-image", `url("${badgeImageSource}")`);
+
+    const $badgeCategory = document.createElement("p");
+    $badgeCategory.setAttribute("class", "badge-category");
+
+    let badgeCategoryText = BADGE_CATEGORIES[badgeCategory];
+    if (!isBadgeAvailable) {
+      badgeCategoryText = `Bad ${badgeCategoryText}`;
+      const regex = /Policies|Protection|Headers/;
+      if (!regex.test(badgeCategoryText)) {
+        badgeCategoryText = `${badgeCategoryText} Headers`;
+      }
+    }
+
+    $badgeCategory.innerText = badgeCategoryText;
+
+    $badgeContents.appendChild($badgeImage);
+    $badgeContents.appendChild($badgeCategory);
+
+    $badgeItem.appendChild($badgeContents);
+    $badgeListContainer.appendChild($badgeItem);
+    $badgeItem.onclick = () => {
+      $mainContainer.style.display = "none";
+      document.getElementById("explanation-view").style.display = "flex";
+      renderBadgeExplanations(badgeCategory, badgeCategoryText, badges);
+    };
+  });
+};
+
 const gaugeOptions = {
   lines: 10,
   angle: 0,
@@ -122,71 +235,19 @@ const renderScoreGauge = (siteScore, disableAnimation = true) => {
   scoreGauge.set(siteScore);
 };
 
-const calculateBadgeScores = badgeCategories => {
-  const badgeScores = {};
-  badgeCategories.forEach(category => {
-    if (badgeScores[category]) badgeScores[category]++;
-    else badgeScores[category] = 1;
-  });
-  return badgeScores;
-};
-
-const renderBadges = badges => {
-  const $badgeListContainer = document.getElementById("badge-list");
-  const badgeScores = calculateBadgeScores(badges.map(badge => badge.category));
-
-  Object.keys(BADGE_CATEGORIES).forEach(badgeCategory => {
-    const $badgeItem = document.createElement("li");
-    $badgeItem.setAttribute("class", "badge-item");
-
-    const $badgeImage = document.createElement("div");
-    $badgeImage.setAttribute("class", "badge-image");
-    $badgeImage.setAttribute("alt", badgeCategory);
-
-    const $badgeContents = document.createElement("div");
-    $badgeContents.setAttribute("class", "badge-contents-container");
-
-    const isBadgeAvailable = !!badgeScores[badgeCategory];
-    const badgeNotAvailableImageSrc = `NO_${badgeCategory}`;
-    const badgeImageSource = isBadgeAvailable
-      ? icons.badges[badgeCategory]
-      : icons.badges[badgeNotAvailableImageSrc];
-
-    $badgeImage.style.setProperty("background-image", `url("${badgeImageSource}")`);
-
-    const $badgeCategory = document.createElement("p");
-    $badgeCategory.setAttribute("class", "badge-category");
-
-    let badgeCategoryText = BADGE_CATEGORIES[badgeCategory];
-    if (!isBadgeAvailable) {
-      badgeCategoryText = `Bad ${badgeCategoryText}`;
-      const regex = /Policies|Protection|Headers/;
-      if (!regex.test(badgeCategoryText)) {
-        badgeCategoryText = `${badgeCategoryText} Headers`;
-      }
-    }
-
-    $badgeCategory.innerText = badgeCategoryText;
-
-    $badgeContents.appendChild($badgeImage);
-    $badgeContents.appendChild($badgeCategory);
-
-    $badgeItem.appendChild($badgeContents);
-    $badgeListContainer.appendChild($badgeItem);
-  });
-};
-
-const render = (val, isCached = false) => {
+// render entryPoint
+const render = (data, isCached = false) => {
   let siteScore, siteBadges;
-  if (val && val.scores) {
-    siteScore = val.scores.score * 100;
-    siteBadges = val.scores.badges;
+  if (data && data.scores) {
+    siteScore = data.scores.score * 100;
+    siteBadges = data.scores.badges;
   }
-  if (!siteScore || !siteBadges) {
-    handlePopupError(score_error);
-  } else {
+  if (siteScore && siteBadges) {
     renderScoreGauge(siteScore, isCached);
     renderBadges(siteBadges, siteScore);
+    document.getElementById("badge-container").style.display = "flex";
+  } else {
+    handlePopupError(score_error);
   }
 };
 
@@ -205,7 +266,6 @@ currentTab.then(tabs => {
     const $scoreContainer = document.getElementById("score-container");
     const $siteErrorContainer = document.querySelector(".site-error");
     // disable popup interaction
-    const $mainContainer = document.querySelector(".main");
     $siteUrl.innerText = isProtocolSupported && !isBrowserScheme ? hostname : tab.url;
     // set favicon
     const faviconUrl = tab.favIconUrl;
@@ -215,20 +275,22 @@ currentTab.then(tabs => {
     }
     $siteFavicon.setAttribute("src", faviconSource);
     if (isProtocolSupported) {
-      storageGet(origin).then(function(val) {
-        if (val) {
+      let isCachedResponse = false;
+      storageGet(origin).then(function(data) {
+        if (data) {
           if ($siteErrorContainer.style.display !== "none") {
             $siteErrorContainer.style.display = "none";
           }
-          render(val, true);
+          isCachedResponse = true;
+          render(data, isCachedResponse);
         } else {
           handlePopupError(data_unavailable);
           fetchAndCacheScores(origin)
-            .then(json => {
+            .then(scores => {
               $siteErrorContainer.style.display = "none";
               $scoreContainer.style.display = "flex";
               $mainContainer.classList.remove("disable");
-              renderScoreGauge(json.scores.score * 100);
+              render(scores, isCachedResponse);
             })
             .catch(err => {
               if (err) {

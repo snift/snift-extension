@@ -7,7 +7,17 @@ html {
   box-sizing: inherit;
 }
 
+:root {
+  --popup-height: 22rem;
+  --popup-width: 22rem;
+  --score-icon-size: 8px;
+  --score-icon-margin: 10px;
+}
+
 body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   align-items: stretch;
   background: #fafafa;
   box-sizing: border-box;
@@ -17,8 +27,8 @@ body {
   width: 100%;
   margin: 0 auto;
   position: relative;
-  min-width: 22rem;
-  min-height: 22rem;
+  min-width: var(--popup-width);
+  min-height: var(--popup-height);
   overflow-y: hidden;
   color: #212121;
 }
@@ -30,9 +40,49 @@ p {
   padding: 0px;
 }
 
+ul,
+li {
+  list-style-type: none;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex-row {
+  flex-direction: row;
+}
+
+.full-height {
+  height: 100%;
+}
+.full-width {
+  width: 100%;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.align-center {
+  align-items: center;
+  text-align: center;
+}
+
+#popup-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
 #badge-container {
+  display: flex;
   background: #ffffff;
   height: 100%;
+  width: 100%;
   border-top: 1px solid #eceaea;
   margin-top: 40px;
 }
@@ -40,16 +90,13 @@ p {
 #badge-list {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
 #badge-list > li {
   cursor: pointer;
-  list-style-type: none;
   margin: 10px;
   text-align: center;
-  list-style-type: none;
   margin: 0px;
   display: flex;
   align-items: center;
@@ -108,7 +155,7 @@ p {
   background-color: #e0e0e0 !important;
 }
 
-.main {
+#main {
   display: flex;
   position: relative;
   width: 100%;
@@ -205,6 +252,98 @@ p {
   text-transform: uppercase;
 }
 
+/** Badge Explanation View **/
+
+#go-back {
+  position: absolute;
+  left: 10px;
+  color: #717171;
+  margin-top: 6px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+#go-back:hover {
+  color: #969696;
+}
+
+#explanation-view {
+  display: none;
+  height: var(--popup-height);
+  text-align: center;
+  width: 100%;
+  max-width: var(--popup-width);
+  background: #ffffff;
+  justify-content: center;
+  flex-direction: column;
+}
+
+#explanation-view div {
+  padding-top: 10px;
+}
+
+#explanation-list {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+#explanation-list li {
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  list-style-type: none;
+  margin: 0px;
+  display: flex;
+  align-items: baseline;
+  padding: 20px;
+  width: 100%;
+  border-bottom: 1px solid #dadada;
+  justify-content: flex-start;
+}
+
+#explanation-list li:last-child {
+  border-bottom: none;
+}
+
+#explanation-list li::before {
+  content: "";
+  min-width: var(--score-icon-size);
+  min-height: var(--score-icon-size);
+  width: var(--score-icon-size);
+  height: var(--score-icon-size);
+  display: inline-block;
+  margin-right: var(--score-icon-margin);
+}
+
+#explanation-list li.metric-pass::before {
+  border-radius: 100%;
+  background-color: #07be53;
+}
+
+#explanation-list li.metric-fail::before {
+  color: #ff5757;
+  border-left: calc(var(--score-icon-size) / 2) solid transparent;
+  border-right: calc(var(--score-icon-size) / 2) solid transparent;
+  border-bottom: var(--score-icon-size) solid #ff5757;
+}
+
+#explanation-list li.metric-pass {
+  color: #058c3d;
+}
+
+#explanation-list li.metric-fail {
+  color: #c14747;
+}
+
+#category-title {
+  max-width: 80%;
+  margin-top: 3px;
+  font-size: 17px;
+  color: #4a4a4a;
+}
+
 /** Firefox specific **/
 @supports (-moz-appearance: none) {
   .hero {
@@ -218,5 +357,18 @@ p {
   .badge-image {
     width: 22px;
     height: 22px;
+  }
+
+  #explanation-list li {
+    font-size: 15px;
+    padding: 15px;
+  }
+
+  #go-back {
+    font-size: 13px;
+  }
+
+  #category-title {
+    font-size: 18px;
   }
 }
