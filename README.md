@@ -1,8 +1,22 @@
-# snift
+<div align="center">
+	<br>
+	<br>
+	<img width="360" src="media/logo.svg" alt="Snift">
+	<br>
+	<br>
+	<br>
+	<br>
+</div>
+
+> Browser extension that helps identify security issues on the sites you visit, anonymously.
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/cb7410e3091b43dab2eff2182a6c3141)](https://app.codacy.com/app/snift/snift-extension?utm_source=github.com&utm_medium=referral&utm_content=snift/snift-extension&utm_campaign=Badge_Grade_Dashboard)
 
-The browser extension for measuring the web's security vulnerabilities.
+## Usage
+
+<img src="media/usage.gif" width="720">
+
+Coming soon to the Chrome Webstore and to the Firefox Addons Store!
 
 ## Development
 
