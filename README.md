@@ -35,6 +35,8 @@ Coming soon to the Chrome Webstore and to the Firefox Addons Store!
     Once this command is run, a `dist` folder should be automatically created, wherein you would find the extension packaged for the target browser environment.
     You would use this folder to load the unpacked extension in the browser.
 
+_NOTE: The snift-api service also needs to be running locally for the extension to work during development. This [guide](https://github.com/snift/snift-api/blob/master/CONTRIBUTING.md) will help you setup the backend service on your machine._
+
 ## Credits
 
 Badge Icons made by [Icongeek26](https://www.flaticon.com/authors/icongeek26)
