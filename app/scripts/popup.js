@@ -66,7 +66,7 @@ const handlePopupError = type => {
       msg = "Sorry! An unknown error occured.";
       break;
   }
-  $errorMessage.innerText = msg;
+  $errorMessage.textContent = msg;
   const popupIcons = icons.popup;
   const errorImageSource = isLoading ? popupIcons.content.loading : popupIcons.content.error;
   $errorImage.setAttribute("src", errorImageSource);
@@ -112,7 +112,7 @@ const renderBadgeExplanations = (selectedBadgeCategory, badgeCategoryText, badge
     $explanationList.removeChild($explanationList.firstChild);
   }
   const $categoryTitle = document.getElementById("category-title");
-  $categoryTitle.innerText = badgeCategoryText;
+  $categoryTitle.textContent = badgeCategoryText;
   subcategories.forEach(sc => {
     let message = "";
     const $explanationListItem = document.createElement("li");
@@ -123,7 +123,7 @@ const renderBadgeExplanations = (selectedBadgeCategory, badgeCategoryText, badge
       message = getBadgeAntiMessage(EXPLANATIONS[sc]);
       $explanationListItem.classList.add("metric-fail");
     }
-    $explanationListItem.innerText = message;
+    $explanationListItem.textContent = message;
     $explanationList.append($explanationListItem);
   });
 
@@ -169,7 +169,7 @@ const renderBadges = badges => {
       }
     }
 
-    $badgeCategory.innerText = badgeCategoryText;
+    $badgeCategory.textContent = badgeCategoryText;
 
     $badgeContents.appendChild($badgeImage);
     $badgeContents.appendChild($badgeCategory);
@@ -221,7 +221,7 @@ const renderScoreGauge = (siteScore, disableAnimation = true) => {
   sniftScoreRenderer.render = function(gauge) {
     const score = Math.floor(gauge.displayedValue);
     if (this) {
-      this.el.innerHTML = score;
+      this.el.textContent = score;
       const range = findScoreRange(score / 100);
       const currentColor = this.el.style.color;
       const rangeColor = RANGE_COLORS[range];
@@ -266,7 +266,7 @@ currentTab.then(tabs => {
     const $scoreContainer = document.getElementById("score-container");
     const $siteErrorContainer = document.querySelector(".site-error");
     // disable popup interaction
-    $siteUrl.innerText = isProtocolSupported && !isBrowserScheme ? hostname : tab.url;
+    $siteUrl.textContent = isProtocolSupported && !isBrowserScheme ? hostname : tab.url;
     // set favicon
     const faviconUrl = tab.favIconUrl;
     let faviconSource = faviconUrl && faviconUrl.length > 0 ? faviconUrl : icons.popup.tab.loading;
